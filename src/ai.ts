@@ -25,19 +25,42 @@ export const initAI = async (
 export const generateQuestionnaire = async (
   engine: MLCEngine,
   intent: Intent,
-  availableCategories: string[]
-): Promise<QuestionnaireItem[]> => {
+  availableCategories: string[],
+  qnaHistory: { question: string, answer: string }[] = []
+): Promise<{ isComplete: boolean, questions: QuestionnaireItem[] }> => {
   
-  const systemPrompt = `You are a trip planning assistant. 
-Your goal is to generate 3 to 5 targeted follow-up questions to help plan a trip.
+  const historyContext = qnaHistory.length > 0
+    ? `\n\nPrevious Conversation History:\n${qnaHistory.map(h => `Q: ${h.question}\nA: ${h.answer}`).join('\n')}`
+    : '';
+
+  const systemPrompt = `You are an interactive trip planning assistant.
+Your goal is to gather comprehensive information based on this checklist:
+- Pace of sightseeing
+- Transportation preferences
+- Cuisine/dietary requirements
+- Accommodation preferences
+- Breaks and downtime
+- Group size/dynamics
+- Flight/travel constraints
+
 The user wants to travel from ${intent.origin} to ${intent.destination} on ${intent.dates} with a ${intent.budget} budget.
-The available attraction categories at the destination are: ${availableCategories.join(', ')}.
-Output ONLY a JSON array of objects with the keys: id (string), question (string), options (array of strings). 
-Do NOT output any other text.`;
+Available attraction categories at the destination are: ${availableCategories.join(', ')}.${historyContext}
+
+Evaluate if you have enough information across all checklist dimensions based on the conversation history.
+If you need more information, output "isComplete": false and generate 2-3 targeted follow-up questions.
+If you have sufficient information to confidently plan the trip, output "isComplete": true and an empty "questions" array.
+
+Output ONLY a JSON object with this exact structure:
+{
+  "isComplete": boolean,
+  "questions": [
+    { "id": "string", "question": "string", "options": ["string", "string"] }
+  ]
+}`;
 
   const messages = [
     { role: 'system' as const, content: systemPrompt },
-    { role: 'user' as const, content: 'Generate the questionnaire in JSON.' }
+    { role: 'user' as const, content: 'Evaluate the current state and generate the JSON response.' }
   ];
 
   const response = await engine.chat.completions.create({
@@ -45,29 +68,25 @@ Do NOT output any other text.`;
     temperature: 0.2,
   });
 
-  let content = response.choices[0].message.content || '[]';
-  const match = content.match(/\[[\s\S]*\]/);
-  if (match) {
-    content = match[0];
-  } else {
-    const matchObj = content.match(/\{[\s\S]*\}/);
-    if (matchObj) content = matchObj[0];
-  }
+  let content = response.choices[0].message.content || '{"isComplete": false, "questions": []}';
+  const matchObj = content.match(/\{[\s\S]*\}/);
+  if (matchObj) content = matchObj[0];
   
   try {
-    // We expect an array, but sometimes LLMs wrap it in an object like { "questions": [...] }
     const parsed = JSON.parse(content);
-    if (Array.isArray(parsed)) return parsed;
-    if (parsed.questions && Array.isArray(parsed.questions)) return parsed.questions;
-    
-    return [
-      { id: "fallback1", question: "Do you prefer fast-paced sightseeing or long museum visits?", options: ["Fast-paced", "Long visits"] }
-    ];
+    return {
+      isComplete: !!parsed.isComplete,
+      questions: Array.isArray(parsed.questions) ? parsed.questions : []
+    };
   } catch (e) {
     console.error("Failed to parse JSON from LLM", e);
-    return [
-      { id: "fallback1", question: "Do you prefer fast-paced sightseeing or long museum visits?", options: ["Fast-paced", "Long visits"] }
-    ];
+    // Fallback if formatting breaks
+    return {
+      isComplete: false,
+      questions: [
+        { id: "fallback_diet", question: "Any dietary requirements?", options: ["No", "Vegetarian", "Vegan", "Gluten-Free"] }
+      ]
+    };
   }
 };
 

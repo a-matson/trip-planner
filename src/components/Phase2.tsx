@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store';
 import { initAI, generateQuestionnaire } from '../ai';
 import { fetchPOIs } from '../tripEngine';
 import { Loader2 } from 'lucide-react';
 
 export const Phase2: React.FC = () => {
-  const { intent, questions, setQuestions, answers, setAnswer, setStep, loadingStatus, setLoadingStatus } = useStore();
+  const { 
+    intent, questions, setQuestions, answers, setAnswer, 
+    setStep, loadingStatus, setLoadingStatus, 
+    qnaHistory, addQnA, clearAnswers 
+  } = useStore();
+  
   const [isGenerating, setIsGenerating] = useState(true);
-
-  const initRef = React.useRef(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -26,9 +30,13 @@ export const Phase2: React.FC = () => {
         const categories = [...new Set(pois.map(p => p.properties.category))];
 
         setLoadingStatus('Generating personalized questions...');
-        const generatedQs = await generateQuestionnaire(engine, intent, categories);
+        const result = await generateQuestionnaire(engine, intent, categories, qnaHistory);
         
-        setQuestions(generatedQs);
+        if (result.isComplete || result.questions.length === 0) {
+          setStep(3);
+        } else {
+          setQuestions(result.questions);
+        }
         setIsGenerating(false);
       } catch (e) {
         console.error(e);
@@ -36,11 +44,49 @@ export const Phase2: React.FC = () => {
       }
     };
     setup();
-  }, [intent, setQuestions, setLoadingStatus]);
+  }, [intent, setQuestions, setLoadingStatus, qnaHistory, setStep]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep(3); // Go to Assembly
+    
+    // Ensure all displayed questions are answered
+    const allAnswered = questions.every(q => answers[q.id]);
+    if (!allAnswered) {
+      alert("Please answer all questions before continuing.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setLoadingStatus('Evaluating your preferences...');
+
+    try {
+      // Compile the current answers into the history
+      const newHistoryItems = questions.map(q => ({
+        question: q.question,
+        answer: answers[q.id]
+      }));
+      
+      addQnA(newHistoryItems);
+
+      // Re-run generation with updated history
+      const engine = await initAI(() => {});
+      const pois = await fetchPOIs();
+      const categories = [...new Set(pois.map(p => p.properties.category))];
+
+      const updatedHistory = [...qnaHistory, ...newHistoryItems];
+      const result = await generateQuestionnaire(engine, intent, categories, updatedHistory);
+
+      if (result.isComplete || result.questions.length === 0) {
+        setStep(3); // Transition to Assembly
+      } else {
+        setQuestions(result.questions);
+        clearAnswers(); // Reset local form state for the new batch
+        setIsGenerating(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setIsGenerating(false);
+    }
   };
 
   if (isGenerating) {
@@ -55,6 +101,9 @@ export const Phase2: React.FC = () => {
   return (
     <div className="glass-panel animate-fade-in form-container">
       <h2 className="form-title">Customize Your Trip</h2>
+      <p style={{textAlign: "center", marginBottom: "1rem", color: "var(--text-secondary)"}}>
+        Step {Math.floor(qnaHistory.length / 3) + 1}
+      </p>
       
       <form onSubmit={handleSubmit}>
         {questions.map((q, i) => (
@@ -69,7 +118,6 @@ export const Phase2: React.FC = () => {
                     type="radio"
                     name={q.id}
                     value={opt}
-                    required
                     checked={answers[q.id] === opt}
                     onChange={() => setAnswer(q.id, opt)}
                     className="radio-input"
@@ -82,7 +130,7 @@ export const Phase2: React.FC = () => {
         ))}
 
         <button type="submit" className="btn w-full mt-6">
-          Generate Itinerary
+          Continue
         </button>
       </form>
     </div>

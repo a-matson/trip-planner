@@ -1,17 +1,8 @@
 import * as turf from '@turf/turf';
-import type { Feature, Point, FeatureCollection, LineString } from 'geojson';
-import type { TimeBlock, Intent } from './store';
+import type { Feature, Point, FeatureCollection, LineString, GeoJsonProperties } from 'geojson';
+import type { TimeBlock, Intent, POIProperties } from './store';
 import { fillGap } from './ai';
 import { MLCEngine } from '@mlc-ai/web-llm';
-
-export interface POIProperties {
-  id: string;
-  name: string;
-  category: string;
-  budget_tier: string;
-  typical_duration_minutes: number;
-  opening_hours: { open: string; close: string };
-}
 
 // Convert HH:mm to minutes since 00:00
 const timeToMins = (timeStr: string): number => {
@@ -42,7 +33,7 @@ export const generateItinerary = async (
   intent: Intent,
   answers: Record<string, string>,
   allPOIs: Feature<Point, POIProperties>[]
-): Promise<{ blocks: TimeBlock[], routeGeoJSON: Feature<LineString, Record<string, unknown>> | null }> => {
+): Promise<{ blocks: TimeBlock[], routeGeoJSON: Feature<LineString, GeoJsonProperties> | null }> => {
   
   // We'll plan for 1 day for simplicity in this demo, starting at 07:00 and ending at 23:00.
   // Sleep block: 23:00 - 07:00
