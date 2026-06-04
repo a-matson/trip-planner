@@ -1,10 +1,7 @@
 import { CreateMLCEngine, MLCEngine } from '@mlc-ai/web-llm';
 import type { Intent, QuestionnaireItem } from './store';
 
-// We use a small, capable model to ensure it runs well on client GPUs
-const MODEL_ID = 'Qwen2-1.5B-Instruct-q4f16_1-MLC'; 
-// Note: If this model is not available in the specific WebLLM version installed, 
-// we might need to fallback to Llama-3-8B-Instruct-q4f32_1-MLC. 
+const MODEL_ID = 'Llama-3-8B-Instruct-q4f32_1-MLC'; 
 
 let engineInstance: MLCEngine | null = null;
 

@@ -1,17 +1,31 @@
 import React, { useMemo } from 'react';
 import { useStore } from '../store';
-import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre';
+import Map, { Source, Layer, Marker, type StyleSpecification, type LngLatBoundsLike } from 'react-map-gl/maplibre';
 
 import { MapPin, Clock } from 'lucide-react';
 
-const emptyStyle = {
+const darkMapStyle: StyleSpecification = {
   version: 8,
-  sources: {},
+  sources: {
+    'carto-dark-tiles': {
+      type: 'raster',
+      tiles: [
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors © CARTO'
+    }
+  },
   layers: [
     {
-      id: 'background',
-      type: 'background',
-      paint: { 'background-color': '#0b0f19' } // Dark background to match our theme
+      id: 'carto-base-tiles',
+      type: 'raster',
+      source: 'carto-dark-tiles',
+      minzoom: 0,
+      maxzoom: 20
     }
   ]
 };
@@ -19,7 +33,7 @@ const emptyStyle = {
 export const Phase4: React.FC = () => {
   const { blocks, routeGeoJSON } = useStore();
 
-  const bounds = useMemo(() => {
+  const bounds: LngLatBoundsLike | null = useMemo(() => {
     if (!blocks || blocks.length === 0) return null;
     const pois = blocks.filter(b => b.poi).map(b => b.poi!.geometry.coordinates);
     if (pois.length === 0) return null;
@@ -75,12 +89,10 @@ export const Phase4: React.FC = () => {
             longitude: -122.4194,
             latitude: 37.7749,
             zoom: 12,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bounds: bounds as any,
+            bounds: bounds || undefined,
             fitBoundsOptions: { padding: 40 }
           }}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          mapStyle={emptyStyle as any}
+          mapStyle={darkMapStyle}
         >
           {routeGeoJSON && (
             <Source id="route" type="geojson" data={routeGeoJSON}>
