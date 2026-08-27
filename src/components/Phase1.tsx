@@ -1,20 +1,69 @@
 import React, { useState } from 'react';
 import { useStore } from '../store';
 import { MapPin, Calendar, DollarSign, Navigation } from 'lucide-react';
+import FlexSearch from "flexsearch";
+import locations from "../../public/countries+cities.json";
+
+const index = new FlexSearch.Index({
+  preset: "performance",
+  tokenize: "full",
+  encoder: "LatinAdvanced",
+  resolution: 9,
+  cache: true,
+});
+
+locations.forEach(({c: cities, n: country}) =>
+  cities.forEach(city => {
+    const id = `${country}:${city}`
+    index.add(id, city)
+  })
+);
+
+const search = (q: string) => {
+  if (!q.trim()) return;
+
+  const ids = index.search(q.trim(), { limit: 20, suggest: true });
+  return ids.map(id => id.toString().split(":").reverse().join(', '));
+}
+
+type Field = "origin" | "destination";
 
 export const Phase1: React.FC = () => {
   const { setIntent, setStep } = useStore();
+  const [results, setResults] = useState<string[]>([]);
+  const [open, setOpen] = useState<Field>();
   const [form, setForm] = useState({
     origin: '',
-    destination: 'San Francisco, CA',
+    destination: '',
     dates: '',
     budget: 'medium'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIntent(form);
     setStep(2);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>, type: Field) => {
+    const value = e.target.value;
+    setForm({ ...form, [type]: value });
+
+    if (!value) {
+      setResults([]);
+      setOpen(undefined);
+      return;
+    }
+
+    const res = search(value) || [];
+    setResults(res);
+    setOpen(type);
+  };
+
+  const selectItem = (item: string, type: Field) => {
+    setForm({ ...form, [type]: item });
+    setOpen(undefined);
+    setResults([]);
   };
 
   return (
@@ -32,8 +81,39 @@ export const Phase1: React.FC = () => {
             className="input-field" 
             placeholder="e.g. New York, NY"
             value={form.origin}
-            onChange={(e) => setForm({...form, origin: e.target.value})}
+            onChange={(e) => handleSearch(e, "origin")}
+            onFocus={() => results.length && setOpen("origin")}
+            onBlur={() => setTimeout(() => setOpen(undefined), 150)}
           />
+          {open === "origin" && results.length > 0 && (
+            <ul
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "black",
+                border: "1px solid #ddd",
+                borderTop: "none",
+                maxHeight: 200,
+                overflowY: "auto",
+                zIndex: 1000
+              }}
+            >
+              {results.map((item, idx) => (
+                <li
+                  key={idx}
+                  onMouseDown={() => selectItem(item, "origin")}
+                  style={{
+                    padding: "8px 10px",
+                    cursor: "pointer"
+                  }}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         
         <div className="form-group">
@@ -46,8 +126,39 @@ export const Phase1: React.FC = () => {
             className="input-field" 
             placeholder="e.g. San Francisco, CA"
             value={form.destination}
-            onChange={(e) => setForm({...form, destination: e.target.value})}
+            onChange={(e) => handleSearch(e, "destination")}
+            onFocus={() => results.length && setOpen("destination")}
+            onBlur={() => setTimeout(() => setOpen(undefined), 150)}
           />
+          {open === "destination" && results.length > 0 && (
+            <ul
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "black",
+                border: "1px solid #ddd",
+                borderTop: "none",
+                maxHeight: 200,
+                overflowY: "auto",
+                zIndex: 1000
+              }}
+            >
+              {results.map((item, idx) => (
+                <li
+                  key={idx}
+                  onMouseDown={() => selectItem(item, "destination")}
+                  style={{
+                    padding: "8px 10px",
+                    cursor: "pointer"
+                  }}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="form-group">
