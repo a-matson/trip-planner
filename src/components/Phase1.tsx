@@ -1,25 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../store';
 import { MapPin, Calendar, DollarSign, Navigation } from 'lucide-react';
-import FlexSearch from "flexsearch";
 import locations from "../../public/countries+cities.json";
+import type { Index } from 'flexsearch';
+import { useCityIndex } from '../hooks/citySearch';
 
-const index = new FlexSearch.Index({
-  preset: "performance",
-  tokenize: "full",
-  encoder: "LatinAdvanced",
-  resolution: 9,
-  cache: true,
-});
-
-locations.forEach(({c: cities, n: country}) =>
-  cities.forEach(city => {
-    const id = `${country}:${city}`
-    index.add(id, city)
-  })
-);
-
-const search = (q: string) => {
+const search = (index: Index, q: string) => {
   if (!q.trim()) return;
 
   const ids = index.search(q.trim(), { limit: 20, suggest: true });
@@ -30,6 +16,7 @@ type Field = "origin" | "destination";
 
 export const Phase1: React.FC = () => {
   const { setIntent, setStep } = useStore();
+  const { index } = useCityIndex(locations);
   const [results, setResults] = useState<string[]>([]);
   const [open, setOpen] = useState<Field>();
   const [form, setForm] = useState({
@@ -38,6 +25,8 @@ export const Phase1: React.FC = () => {
     dates: '',
     budget: 'medium'
   });
+
+  if (!index) return;
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,7 +44,7 @@ export const Phase1: React.FC = () => {
       return;
     }
 
-    const res = search(value) || [];
+    const res = search(index, value) || [];
     setResults(res);
     setOpen(type);
   };
