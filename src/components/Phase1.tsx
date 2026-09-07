@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from '../store';
 import { MapPin, Calendar, DollarSign, Navigation } from 'lucide-react';
-import locations from "../../public/countries+cities.json";
-import type { Index } from 'flexsearch';
 import { useCityIndex } from '../hooks/citySearch';
-
-const search = (index: Index, q: string) => {
-  if (!q.trim()) return;
-
-  const ids = index.search(q.trim(), { limit: 20, suggest: true });
-  return ids.map(id => id.toString().split(":").reverse().join(', '));
-}
 
 type Field = "origin" | "destination";
 
 export const Phase1: React.FC = () => {
   const { setIntent, setStep } = useStore();
-  const { index } = useCityIndex(locations);
+  const { search, ready, progress } = useCityIndex();
   const [results, setResults] = useState<string[]>([]);
   const [open, setOpen] = useState<Field>();
   const [form, setForm] = useState({
@@ -26,15 +17,13 @@ export const Phase1: React.FC = () => {
     budget: 'medium'
   });
 
-  if (!index) return;
-
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIntent(form);
     setStep(2);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>, type: Field) => {
+  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>, type: Field) => {
     const value = e.target.value;
     setForm({ ...form, [type]: value });
 
@@ -44,7 +33,7 @@ export const Phase1: React.FC = () => {
       return;
     }
 
-    const res = search(index, value) || [];
+    const res = await search(value, 10) || [];
     setResults(res);
     setOpen(type);
   };
@@ -54,6 +43,14 @@ export const Phase1: React.FC = () => {
     setOpen(undefined);
     setResults([]);
   };
+
+  if (!ready) {
+  return (
+    <div>
+      Loading city database: {progress}%
+    </div>
+  );
+}
 
   return (
     <div className="glass-panel animate-fade-in form-container">

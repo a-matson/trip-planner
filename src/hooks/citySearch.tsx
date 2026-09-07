@@ -1,52 +1,114 @@
-import { useEffect, useState } from "react";
-import FlexSearch, { type Index } from "flexsearch";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const INDEX_KEY = "city_index_v1";
+type Status =
+  | "idle"
+  | "loading-index"
+  | "loading-data"
+  | "building-index"
+  | "persisting"
+  | "ready"
+  | "error";
 
-export function useCityIndex(locations: { n: string; c: string[] }[]) {
-  const [index, setIndex] = useState<Index>();
-  const [ready, setReady] = useState(false);
+type SearchRequest = {
+  resolve: (results: string[]) => void;
+  reject: (error: Error) => void;
+};
+
+export function useCityIndex() {
+  const workerRef = useRef<Worker | null>(null);
+  const requestIdRef = useRef(0);
+
+  const requestsRef = useRef(new Map<number, SearchRequest>());
+
+  const [status, setStatus] = useState<Status>("idle");
+
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
+    const worker = new Worker(
+      new URL("../workers/cityIndex.worker.ts", import.meta.url),
+      { type: "module" },
+    );
 
-		async function createIndex() {
-			const index = new FlexSearch.Index({
-				preset: "performance",
-				tokenize: "full",
-				encoder: "LatinAdvanced",
-				resolution: 9,
-				cache: true,
-			});
+    workerRef.current = worker;
 
-			const cached = localStorage.getItem(INDEX_KEY);
+    worker.onmessage = (event) => {
+      const message = event.data;
 
-			if (cached) {
-				console.log("Importing index from cache")
-				index.import(INDEX_KEY, cached);
-			} else {
-				locations.forEach(({c: cities, n: country}) =>
-					cities.forEach(city => {
-						index.add(`${country}:${city}`, city)
-					})
-				);
+      switch (message.type) {
+        case "status":
+          setStatus(message.status);
 
-				index.export((key, data) => {
-					console.log(key, data)
-					localStorage.setItem(key, data);
-				})
-			}
+          if (message.progress !== undefined) setProgress(message.progress);
 
-			if (!cancelled) {
-				setIndex(index);
-				setReady(true);
-			}
-		}
+          break;
 
-		createIndex();
+        case "search-results": {
+          const request =
+            requestsRef.current.get(message.id);
 
-		return () => { cancelled = true };
-  }, [locations]);
+          if (!request) return;
 
-  return { index, ready };
+          request.resolve(message.results);
+          requestsRef.current.delete(message.id);
+
+          break;
+        }
+
+        case "error":
+          console.error("City index worker error:", message.error);
+
+          setStatus("error");
+
+          break;
+      }
+    };
+
+    worker.postMessage({ type: "init" });
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+
+      requestsRef.current.forEach(
+        ({ reject }) => {
+          reject(
+            new Error("City index worker terminated"),
+          );
+        },
+      );
+
+      requestsRef.current.clear();
+    };
+  }, []);
+
+  const search = useCallback(
+    (
+      query: string,
+      limit = 10,
+    ): Promise<string[]> => {
+      return new Promise((resolve, reject) => {
+        const worker = workerRef.current;
+
+        if (!worker) {
+          reject(new Error("City index worker not ready"));
+          return;
+        }
+
+        const id = ++requestIdRef.current;
+
+        requestsRef.current.set(id, { resolve, reject });
+
+        worker.postMessage({ type: "search", id, query, limit });
+      });
+    },
+    [],
+  );
+
+  return {
+    search,
+    ready: status === "ready",
+    status,
+    progress,
+  };
 }
