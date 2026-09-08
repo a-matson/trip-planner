@@ -1,114 +1,99 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Status =
-  | "idle"
-  | "loading-index"
-  | "loading-data"
-  | "building-index"
-  | "persisting"
-  | "ready"
-  | "error";
+	| 'idle'
+	| 'loading-index'
+	| 'loading-data'
+	| 'building-index'
+	| 'persisting'
+	| 'ready'
+	| 'error';
 
 type SearchRequest = {
-  resolve: (results: string[]) => void;
-  reject: (error: Error) => void;
+	resolve: (results: string[]) => void;
+	reject: (error: Error) => void;
 };
 
 export function useCityIndex() {
-  const workerRef = useRef<Worker | null>(null);
-  const requestIdRef = useRef(0);
+	const workerRef = useRef<Worker | null>(null);
+	const requestIdRef = useRef(0);
+	const requestsRef = useRef(new Map<number, SearchRequest>());
 
-  const requestsRef = useRef(new Map<number, SearchRequest>());
+	const [status, setStatus] = useState<Status>('idle');
+	const [progress, setProgress] = useState(0);
 
-  const [status, setStatus] = useState<Status>("idle");
+	useEffect(() => {
+		const worker = new Worker(
+			new URL('../workers/cityIndex.worker.ts', import.meta.url),
+			{ type: 'module' },
+		);
 
-  const [progress, setProgress] = useState(0);
+		workerRef.current = worker;
 
-  useEffect(() => {
-    const worker = new Worker(
-      new URL("../workers/cityIndex.worker.ts", import.meta.url),
-      { type: "module" },
-    );
+		worker.onmessage = (event) => {
+			const message = event.data;
 
-    workerRef.current = worker;
+			switch (message.type) {
+				case 'status':
+					setStatus(message.status);
 
-    worker.onmessage = (event) => {
-      const message = event.data;
+					if (message.progress !== undefined) setProgress(message.progress);
 
-      switch (message.type) {
-        case "status":
-          setStatus(message.status);
+					break;
 
-          if (message.progress !== undefined) setProgress(message.progress);
+				case 'search-results': {
+					const request = requestsRef.current.get(message.id);
 
-          break;
+					if (!request) return;
 
-        case "search-results": {
-          const request =
-            requestsRef.current.get(message.id);
+					request.resolve(message.results);
+					requestsRef.current.delete(message.id);
 
-          if (!request) return;
+					break;
+				}
 
-          request.resolve(message.results);
-          requestsRef.current.delete(message.id);
+				case 'error':
+					console.error('City index worker error:', message.error);
+					setStatus('error');
+					break;
+			}
+		};
 
-          break;
-        }
+		worker.postMessage({ type: 'init' });
 
-        case "error":
-          console.error("City index worker error:", message.error);
+		return () => {
+			worker.terminate();
+			workerRef.current = null;
 
-          setStatus("error");
+			requestsRef.current.forEach(({ reject }) => {
+				reject(new Error('City index worker terminated'));
+			});
 
-          break;
-      }
-    };
+			requestsRef.current.clear();
+		};
+	}, []);
 
-    worker.postMessage({ type: "init" });
+	const search = useCallback((query: string, limit = 10): Promise<string[]> => {
+		return new Promise((resolve, reject) => {
+			const worker = workerRef.current;
 
-    return () => {
-      worker.terminate();
-      workerRef.current = null;
+			if (!worker) {
+				reject(new Error('City index worker not ready'));
+				return;
+			}
 
-      requestsRef.current.forEach(
-        ({ reject }) => {
-          reject(
-            new Error("City index worker terminated"),
-          );
-        },
-      );
+			const id = ++requestIdRef.current;
 
-      requestsRef.current.clear();
-    };
-  }, []);
+			requestsRef.current.set(id, { resolve, reject });
 
-  const search = useCallback(
-    (
-      query: string,
-      limit = 10,
-    ): Promise<string[]> => {
-      return new Promise((resolve, reject) => {
-        const worker = workerRef.current;
+			worker.postMessage({ type: 'search', id, query, limit });
+		});
+	}, []);
 
-        if (!worker) {
-          reject(new Error("City index worker not ready"));
-          return;
-        }
-
-        const id = ++requestIdRef.current;
-
-        requestsRef.current.set(id, { resolve, reject });
-
-        worker.postMessage({ type: "search", id, query, limit });
-      });
-    },
-    [],
-  );
-
-  return {
-    search,
-    ready: status === "ready",
-    status,
-    progress,
-  };
+	return {
+		search,
+		ready: status === 'ready',
+		status,
+		progress,
+	};
 }

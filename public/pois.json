@@ -1,185 +1,185 @@
 {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4690, 37.7690]
-      },
-      "properties": {
-        "id": "gg-park",
-        "name": "Golden Gate Park",
-        "category": "park",
-        "budget_tier": "free",
-        "typical_duration_minutes": 180,
-        "opening_hours": {
-          "open": "00:00",
-          "close": "23:59"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4008, 37.7857]
-      },
-      "properties": {
-        "id": "sfmoma",
-        "name": "SFMOMA",
-        "category": "museum",
-        "budget_tier": "high",
-        "typical_duration_minutes": 150,
-        "opening_hours": {
-          "open": "10:00",
-          "close": "17:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4220, 37.8267]
-      },
-      "properties": {
-        "id": "alcatraz",
-        "name": "Alcatraz Island",
-        "category": "historic",
-        "budget_tier": "high",
-        "typical_duration_minutes": 180,
-        "opening_hours": {
-          "open": "09:00",
-          "close": "18:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4101, 37.8087]
-      },
-      "properties": {
-        "id": "pier39",
-        "name": "Pier 39",
-        "category": "park",
-        "budget_tier": "free",
-        "typical_duration_minutes": 120,
-        "opening_hours": {
-          "open": "10:00",
-          "close": "22:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4165, 37.8086]
-      },
-      "properties": {
-        "id": "boudin",
-        "name": "Boudin Bakery",
-        "category": "restaurant",
-        "budget_tier": "medium",
-        "typical_duration_minutes": 60,
-        "opening_hours": {
-          "open": "08:00",
-          "close": "21:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4216, 37.7735]
-      },
-      "properties": {
-        "id": "zuni",
-        "name": "Zuni Cafe",
-        "category": "restaurant",
-        "budget_tier": "high",
-        "typical_duration_minutes": 90,
-        "opening_hours": {
-          "open": "11:30",
-          "close": "22:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4058, 37.8024]
-      },
-      "properties": {
-        "id": "coit",
-        "name": "Coit Tower",
-        "category": "historic",
-        "budget_tier": "low",
-        "typical_duration_minutes": 60,
-        "opening_hours": {
-          "open": "10:00",
-          "close": "17:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4485, 37.8020]
-      },
-      "properties": {
-        "id": "palace-fine-arts",
-        "name": "Palace of Fine Arts",
-        "category": "historic",
-        "budget_tier": "free",
-        "typical_duration_minutes": 60,
-        "opening_hours": {
-          "open": "00:00",
-          "close": "23:59"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.4268, 37.7614]
-      },
-      "properties": {
-        "id": "tartine",
-        "name": "Tartine Bakery",
-        "category": "restaurant",
-        "budget_tier": "medium",
-        "typical_duration_minutes": 45,
-        "opening_hours": {
-          "open": "08:00",
-          "close": "16:00"
-        }
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-122.3973, 37.8014]
-      },
-      "properties": {
-        "id": "exploratorium",
-        "name": "Exploratorium",
-        "category": "museum",
-        "budget_tier": "medium",
-        "typical_duration_minutes": 180,
-        "opening_hours": {
-          "open": "10:00",
-          "close": "17:00"
-        }
-      }
-    }
-  ]
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.469, 37.769]
+			},
+			"properties": {
+				"id": "gg-park",
+				"name": "Golden Gate Park",
+				"category": "park",
+				"budget_tier": "free",
+				"typical_duration_minutes": 180,
+				"opening_hours": {
+					"open": "00:00",
+					"close": "23:59"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4008, 37.7857]
+			},
+			"properties": {
+				"id": "sfmoma",
+				"name": "SFMOMA",
+				"category": "museum",
+				"budget_tier": "high",
+				"typical_duration_minutes": 150,
+				"opening_hours": {
+					"open": "10:00",
+					"close": "17:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.422, 37.8267]
+			},
+			"properties": {
+				"id": "alcatraz",
+				"name": "Alcatraz Island",
+				"category": "historic",
+				"budget_tier": "high",
+				"typical_duration_minutes": 180,
+				"opening_hours": {
+					"open": "09:00",
+					"close": "18:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4101, 37.8087]
+			},
+			"properties": {
+				"id": "pier39",
+				"name": "Pier 39",
+				"category": "park",
+				"budget_tier": "free",
+				"typical_duration_minutes": 120,
+				"opening_hours": {
+					"open": "10:00",
+					"close": "22:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4165, 37.8086]
+			},
+			"properties": {
+				"id": "boudin",
+				"name": "Boudin Bakery",
+				"category": "restaurant",
+				"budget_tier": "medium",
+				"typical_duration_minutes": 60,
+				"opening_hours": {
+					"open": "08:00",
+					"close": "21:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4216, 37.7735]
+			},
+			"properties": {
+				"id": "zuni",
+				"name": "Zuni Cafe",
+				"category": "restaurant",
+				"budget_tier": "high",
+				"typical_duration_minutes": 90,
+				"opening_hours": {
+					"open": "11:30",
+					"close": "22:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4058, 37.8024]
+			},
+			"properties": {
+				"id": "coit",
+				"name": "Coit Tower",
+				"category": "historic",
+				"budget_tier": "low",
+				"typical_duration_minutes": 60,
+				"opening_hours": {
+					"open": "10:00",
+					"close": "17:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4485, 37.802]
+			},
+			"properties": {
+				"id": "palace-fine-arts",
+				"name": "Palace of Fine Arts",
+				"category": "historic",
+				"budget_tier": "free",
+				"typical_duration_minutes": 60,
+				"opening_hours": {
+					"open": "00:00",
+					"close": "23:59"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.4268, 37.7614]
+			},
+			"properties": {
+				"id": "tartine",
+				"name": "Tartine Bakery",
+				"category": "restaurant",
+				"budget_tier": "medium",
+				"typical_duration_minutes": 45,
+				"opening_hours": {
+					"open": "08:00",
+					"close": "16:00"
+				}
+			}
+		},
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.3973, 37.8014]
+			},
+			"properties": {
+				"id": "exploratorium",
+				"name": "Exploratorium",
+				"category": "museum",
+				"budget_tier": "medium",
+				"typical_duration_minutes": 180,
+				"opening_hours": {
+					"open": "10:00",
+					"close": "17:00"
+				}
+			}
+		}
+	]
 }
